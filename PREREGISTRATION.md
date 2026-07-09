@@ -56,3 +56,17 @@ See the internal design doc §5 (not distributed with this public repo). Key don
 
 ## Facts pending measurement / re-verify at publish
 Neon suspend-vs-fail at cap; Turso `BLOCKED` on Free + whether SELECT also blocks; Supabase actual read-only trigger (500 MB db / 1.5× one-shot growth / disk %); D1 read-replication still Beta; Turso platform (SDK `@tursodatabase/serverless` now recommended) + free-tier survival.
+
+## Amendment 2026-07-09 — D1 follow-up experiments (pre-registered before running)
+
+The first D1 run (storage fill → survival probe → recovery) is measured and written up. External review + re-reading `results/probe-d1.jsonl` showed the survival matrix was **headroom-confounded** (the probe ran at `size_after ≈ 499.88 MB`, ~600 KB below the ceiling, and every surviving mutation was size-neutral or size-reducing) and that `CREATE INDEX`'s `SQLITE_NOMEM` is a memory failure, not the storage wall. These two follow-ups pin those open questions. **Throwaway account only** — the account-scoped daily walls must never run on a production-adjacent account.
+
+**Follow-up A — slack vs exemption (`bin/probe-slack.mjs`).** At the wall, loop single-row inserts of a fixed ~4 KB payload; record `size_after` each; count successes to the first `Exceeded maximum DB size`.
+- **Prediction (falsifiable):** ~N single-row inserts land where N × 4 KB ≈ the sub-wall headroom, `size_after` rising ~linearly to a ceiling that pins the wall to one row ⇒ **SLACK** (small writes are *not* exempt; they consume headroom). A pure storage cap cannot exempt writes indefinitely.
+- **Refuted if:** more than `--max` (2000, ≈ 8 MB ≫ headroom) small inserts land without tripping ⇒ small growing writes are genuinely exempt (surprising; re-check).
+
+**Follow-up B — CREATE INDEX: memory or wall? (`bin/probe-index-control.mjs`).** Fill a **control** DB to ~300 MB (below the wall); run `CREATE INDEX ON bench(v)`.
+- **Prediction (falsifiable):** it FAILS with a memory error (`SQLITE_NOMEM`) at ~300 MB, well below the 500 MB wall ⇒ the index failure is **memory-bound and independent of the storage wall** (as the article now states).
+- **Re-characterize if:** it SUCCEEDS at 300 MB ⇒ the memory threshold sits between 300 and 500 MB (index cost tracks DB size); still not the storage wall, but the article should say "builds fine at 300 MB, fails near the wall."
+
+Write budget for both on one throwaway account (Free 100k rows_written/day): fill main to wall ≈ 39k + slack loop ≈ 0.2k + fill control to 300 MB ≈ 24k ≈ **63k / 100k** — fits one UTC day.

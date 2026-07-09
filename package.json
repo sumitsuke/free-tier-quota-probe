@@ -10,7 +10,9 @@
     "ping": "node --env-file=.env bin/ping.mjs",
     "fill": "node --env-file=.env bin/fill.mjs",
     "probe": "node --env-file=.env bin/probe.mjs",
-    "recover": "node --env-file=.env bin/recover.mjs"
+    "recover": "node --env-file=.env bin/recover.mjs",
+    "probe-slack": "node --env-file=.env bin/probe-slack.mjs",
+    "probe-index": "node --env-file=.env bin/probe-index-control.mjs"
   },
   "dependencies": {
     "pg": "^8.13.1",
