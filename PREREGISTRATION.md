@@ -66,7 +66,7 @@ The first D1 run (storage fill → survival probe → recovery) is measured and 
 - **Refuted if:** more than `--max` (2000, ≈ 8 MB ≫ headroom) small inserts land without tripping ⇒ small growing writes are genuinely exempt (surprising; re-check).
 
 **Follow-up B — CREATE INDEX: memory or wall? (`bin/probe-index-control.mjs`).** Fill a **control** DB to ~300 MB (below the wall); run `CREATE INDEX ON bench(v)`.
-- **Prediction (falsifiable):** it FAILS with a memory error (`SQLITE_NOMEM`) at ~300 MB, well below the 500 MB wall ⇒ the index failure is **memory-bound and independent of the storage wall** (as the article now states).
+- **Prediction (falsifiable):** it FAILS with a memory error (`SQLITE_NOMEM`) at ~300 MB, well below the 500 MB wall ⇒ the index failure is **memory-bound and independent of the storage wall**. — *REFUTED by measurement:* at 300 MB it failed with `Exceeded maximum DB size` (storage, not memory); deleting to 80 MB and re-indexing showed the index roughly doubles storage (×1.998), so it hits the wall via its own footprint. The final finding is the opposite of this prediction; the frozen text stays as the pre-registered (and refuted) hypothesis.
 - **Re-characterize if:** it SUCCEEDS at 300 MB ⇒ the memory threshold sits between 300 and 500 MB (index cost tracks DB size); still not the storage wall, but the article should say "builds fine at 300 MB, fails near the wall."
 
 Write budget for both on one throwaway account (Free 100k rows_written/day): fill main to wall ≈ 39k + slack loop ≈ 0.2k + fill control to 300 MB ≈ 24k ≈ **63k / 100k** — fits one UTC day.
