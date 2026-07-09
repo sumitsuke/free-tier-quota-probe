@@ -2,6 +2,7 @@
 // Dry-run by default. Real fill requires --confirm-destructive AND env BILLING_SAFE=confirmed.
 //   node --env-file=.env bin/fill.mjs --target d1                      (dry run: prints the plan)
 //   node --env-file=.env bin/fill.mjs --target d1 --confirm-destructive
+//   node --env-file=.env bin/fill.mjs --target d1 --control --cap-mb 300 --confirm-destructive   (fill the control sibling to ~300MB)
 // For D1 the real DB size comes back in meta.size_after (authoritative); pg/turso fall back to est bytes
 // until a native_size poll is added. Storage wall is per-DB (does not touch the account daily budget).
 import { makeTarget } from '../lib/targets.mjs';
@@ -21,7 +22,8 @@ const capBytes = capMB * 1024 * 1024;
 const batch = Number(arg('--batch', 50));             // D1 REST: 2 params/row × 50 = 100 = the param cap
 const reportEvery = Number(arg('--report', 20));
 
-// deterministic high-entropy payload of ~rowBytes, base64 so it is REST/JSON-safe and incompressible.
+// deterministic high-entropy payload of ~rowBytes, base64 for a REST/JSON-safe string body.
+// (base64 itself is ~25% compressible; size is read from D1's meta.size_after, so payload compressibility isn't load-bearing.)
 const mkPayload = (k) => payload(SEED, k, Math.ceil(rowBytes * 3 / 4)).toString('base64');
 
 console.log(`# fill ${name} — storage wall`);
@@ -38,9 +40,10 @@ if (process.env.BILLING_SAFE !== 'confirmed') {
 
 const t = makeTarget(name);
 const d = DIALECTS[t.dialect];
-const outFile = `fill-${name}.jsonl`;
+const isControl = has('--control');
+const outFile = `fill-${name}${isControl ? '-control' : ''}.jsonl`;
 const startedIso = new Date().toISOString();
-await t.open();
+await t.open(isControl);
 for (const stmt of d.schema) { const r = await t.run({ sql: stmt, params: [] }); if (!r.ok) console.error('schema warn:', r.code, r.message); }
 
 const ph = (i) => (t.dialect === 'pg' ? `$${i}` : '?');
@@ -73,7 +76,7 @@ const rec = {
   wall: wall ?? '(reached cap, no wall)', lastMeta,
 };
 appendJsonl(outFile, rec);
-appendRaw(`fill-${name}.raw.jsonl`, rec);
+appendRaw(`fill-${name}${isControl ? '-control' : ''}.raw.jsonl`, rec);
 console.log('\n=== FILL RESULT ===');
 console.log(JSON.stringify(rec, null, 2));
 console.log('\nNext: bin/probe.mjs (post-wall operation survival) → bin/recover.mjs.');
