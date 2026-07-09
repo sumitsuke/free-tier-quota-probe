@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+!.env.example
+# raw responses may contain secrets/PII — never publish; only the redacted allowlist JSONL is committed
+results/raw/
+*.raw.jsonl
+# OS / editor
+.DS_Store
+Thumbs.db

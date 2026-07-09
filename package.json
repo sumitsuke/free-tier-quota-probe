@@ -1,0 +1,22 @@
+{
+  "name": "free-tier-quota-probe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Quota-limit observability probe for free-tier serverless DBs (Supabase/Neon/Turso/D1): fill to the wall, capture the failure form, probe survival, run recovery recipes, verify integrity.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "selftest": "node bin/selftest.mjs",
+    "calibrate": "node --env-file=.env bin/calibrate.mjs",
+    "fill": "node --env-file=.env bin/fill.mjs",
+    "probe": "node --env-file=.env bin/probe.mjs",
+    "recover": "node --env-file=.env bin/recover.mjs",
+    "checksum": "node --env-file=.env bin/checksum.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "@neondatabase/serverless": "^0.10.4",
+    "@libsql/client": "^0.14.0"
+  },
+  "comment": "Reuses the serverless-db-bench (Q3) stack. D1 uses native fetch (no package). Turso: @libsql/client works on hosted free; @tursodatabase/serverless is the newer recommended SDK — pick at Phase 0 (see PREREGISTRATION 'Facts pending')."
+}
