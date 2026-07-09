@@ -13,15 +13,16 @@ The point is to measure what the docs don't quite say: **what actually breaks, w
 
 This repo is the companion to a write-up of the D1 run. The other three providers are a follow-up.
 
-## What we found (Cloudflare D1, Workers Free, 2026-07, n=1)
+## What we found (Cloudflare D1, Workers Free, 2026-07, REST /query, n=1)
 
-Filling one database with high-entropy rows hit the **per-DB 500 MB wall** (not the 5 GB account limit, not the daily read/write limits — those are separate walls):
+Filling one database with high-entropy rows hit the **per-DB 500 MB wall** (distinct from the 5 GB account limit and the daily read/write limits):
 
-- **Wall:** at `500,498,432` bytes → `HTTP 400 / code 7500 / "Exceeded maximum DB size"` (39,050 rows, 92 s).
-- **The wall is not read-only.** After the wall, `SELECT`, single-row `INSERT/UPDATE/DELETE`, and `CREATE TABLE` all still succeed. Only **bulk `INSERT` (50 rows / ~600 KB)** and **`CREATE INDEX`** are blocked — both return code `7500`, but with different messages (`Exceeded maximum DB size` vs `out of memory: SQLITE_NOMEM`). So `7500` is a **generic** D1 query-error code; the storage wall is identified by the *message*, not the code.
-- **Recovery is R1 (SQL only, free).** `DELETE` of a chunk drops the reported `meta.size_after` from ~500 MB to ~244 MB *immediately*, and writes resume. `VACUUM` is rejected (`cannot VACUUM from within a transaction`) — and isn't needed.
+- **Wall (bracketed, not pinned).** The last *successful* batch left `meta.size_after = 499,884,032` (≈499.9 MB); the next ~600 KB bulk insert was rejected with `HTTP 400 / code 7500 / "Exceeded maximum DB size"`. The failed query returns no size, so the ceiling is bracketed right around the nominal 500 MB, not pinned to a byte.
+- **Not a full read-only lockout — but read the size meter.** Near the wall, `SELECT` plus size-neutral/reducing ops (`UPDATE`/`DELETE`, and a 1-byte `INSERT`) all succeeded. But the probe ran at ≈499.88 MB — ~600 KB *below* the ceiling — and every "survivor" was size-neutral or size-reducing (`results/probe-d1.jsonl` shows each op's `size_after`). So "small writes survive the wall" is **headroom-confounded**, not a proven exemption; only a ~600 KB *growing* write was actually rejected.
+- **`CREATE INDEX` is not wall evidence.** It failed with `out of memory: SQLITE_NOMEM` — a **memory** limit (the index build sorts in Worker memory), independent of storage; it would likely fail on a smaller DB too. The same numeric `7500` wraps both messages, and the docs classify failures **by message** — `7500` appears nowhere in them.
+- **Recovery R1 — one `DELETE`, no upgrade, but not quota-free.** `DELETE` drops the reported `meta.size_after` (~500→244 MB) *immediately* and writes resume; `VACUUM` is rejected over REST `/query` and isn't needed. But D1 counts `DELETE` as a write, so the 19,998-row recovery spent ≈20% of the daily 100k free write budget. And `size_after` is D1's *reported* size (the docs don't say physical vs logical) — the meter dropping doesn't prove the file shrank (cf. workerd#1618, local).
 
-Caveats: each operation is **n=1**; the operation-size threshold between "passes" and "blocked" is not characterized; whether the per-DB wall and the account 5 GB wall share enforcement is **untested**. Raw captures are in [`results/`](./results); frozen predictions in [`PREREGISTRATION.md`](./PREREGISTRATION.md).
+Caveats: each op **n=1**; **REST `/query` only** (Worker Binding API may differ, esp. `VACUUM`); the size threshold for *growing* writes is uncharacterized; per-DB vs account-wall enforcement untested. Raw captures in [`results/`](./results); frozen predictions in [`PREREGISTRATION.md`](./PREREGISTRATION.md).
 
 ## Responsible use (read before running)
 
