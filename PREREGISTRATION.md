@@ -4,7 +4,7 @@
 
 - Providers (own free-tier accounts, throwaway projects): **Supabase / Neon / Turso / Cloudflare D1**
 - Confirm-date of all doc facts below: **2026-07-08** (re-verify at publish — pre-publish currency review is mandatory)
-- Design lineage: 計画書 v7 (`../計画書_v7.md`). This file operationalizes v7 §1–§5.
+- Design lineage: internal design doc, v7 (not distributed with this public repo). This file operationalizes its §1–§5.
 
 ## Backbone (measured artifacts — durable to vendors fixing docs)
 1. **failure-form catalog** — captured SQLSTATE / error body / request IDs at each wall.
@@ -52,7 +52,7 @@ Capture only: HTTP status, selected headers (rate-limit / `Retry-After` / `CF-Ra
 Own accounts only; throwaway projects; **no multi-account**; app-realistic rate (no retry-storm; stop on 429); we **fill** allotted caps, we do not **exceed** them (retain evidence). Read each provider AUP and set identity strategy consciously (public GitHub/Qiita identity). Kill on: 429 storm / 5xx run / abuse notice / anomalous queue time.
 
 ## Quote-freeze (cite only these strings) & don't-write list
-See `../計画書_v7.md` §5. Key don't-writes: "D1 storage wall blocks SELECT" (that's the daily wall); "Supabase can't recover via SQL" (official recipe exists); "Neon 90-day deletion is a general policy" (Azure-region only); "Turso VACUUM works" (disabled); "#43487 is a live contradiction" (fixed 2026-04-13); "the D1 $134 bill is a Cloudflare-reported incident" (it's a developer post-mortem); "storage axis is uniform" (measure first).
+See the internal design doc §5 (not distributed with this public repo). Key don't-writes: "D1 storage wall blocks SELECT" (that's the daily wall); "Supabase can't recover via SQL" (official recipe exists); "Neon 90-day deletion is a general policy" (Azure-region only); "Turso VACUUM works" (disabled); "#43487 is a live contradiction" (fixed 2026-04-13); "the D1 $134 bill is a Cloudflare-reported incident" (it's a developer post-mortem); "storage axis is uniform" (measure first).
 
 ## Facts pending measurement / re-verify at publish
 Neon suspend-vs-fail at cap; Turso `BLOCKED` on Free + whether SELECT also blocks; Supabase actual read-only trigger (500 MB db / 1.5× one-shot growth / disk %); D1 read-replication still Beta; Turso platform (SDK `@tursodatabase/serverless` now recommended) + free-tier survival.
