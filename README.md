@@ -66,3 +66,10 @@ Raw responses (which may contain secrets) are written to a git-ignored private f
 ## License
 
 MIT. Educational / interoperability use.
+
+## 設計・検証の記録（Sumitsuke Lab）
+
+このリポジトリの背景・検証環境・判定・最終検証日・失敗例は、Sumitsuke Lab の本家記事にまとめています。
+
+- 無料枠の実測シリーズ（D1 500MB の壁ほか） → https://sumitsuke.jp/lab/
+- 受託（生成 AI コード・外注コードの点検と修理・テキスト完結） → https://sumitsuke.jp/works/repair/
