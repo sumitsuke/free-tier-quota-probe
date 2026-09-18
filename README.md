@@ -65,7 +65,7 @@ Raw responses (which may contain secrets) are written to a git-ignored private f
 
 ## License
 
-MIT. Educational / interoperability use.
+Code: MIT (see `LICENSE`). Data, tables and figures (`results/*.jsonl`, figures): CC BY 4.0 (see `DATA_LICENSE`) — please credit **Sumitsuke Lab** (https://sumitsuke.jp/lab/). Educational / interoperability use.
 
 ## 設計・検証の記録（Sumitsuke Lab）
 
