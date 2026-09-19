@@ -1,0 +1,17 @@
+# 小さな CI（2026-09-19）: 第三者が clone して確かめられることを、push のたびに機械で確かめる。
+#   ①チェックサム（SHA256SUMS があるリポ） ②コンパイル・裸の except なし・整形済み ③公開データからの再生成が commit と一致
+name: verify
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: syntax
+        run: for f in $(git ls-files '*.mjs' '*.js'); do node --check "$f"; done
+      - name: reproduce from committed data and compare
+        run: |
+          npm run selftest
